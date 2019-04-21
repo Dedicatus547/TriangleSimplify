@@ -4,12 +4,12 @@
 using namespace std;
 
 int main() {
-    ifstream fin("input.obj");
+    ifstream fin(INPUTFILE);
     TriangleNet net;
     fin >> net;
     fin.close();
     net.simplify(MAXAREA);
-    ofstream fout("output.obj");
+    ofstream fout(OUTPUTFILE);
     fout << net;
     fout.close();
     return 0;

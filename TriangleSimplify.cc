@@ -91,6 +91,7 @@ istream& operator>>(istream& input, TriangleNet& net) {
         if (str == "v") {
             input >> pin.x >> pin.y >> pin.z;
             net.vertexTab.insert(pin);
+            net.vertexAdj.push_back(forward_list<size_t>());
         }
         else if (str == "f") {
             input >> tri[0] >> ch >> xx >> ch >> xx;
@@ -104,6 +105,7 @@ istream& operator>>(istream& input, TriangleNet& net) {
         }
         else    getline(input, str);
     }
+    return input;
 }
 
 ostream& operator<<(ostream& output, TriangleNet& net) {
@@ -120,10 +122,12 @@ ostream& operator<<(ostream& output, TriangleNet& net) {
     auto& trt = net.triangleTab;
     for (size_t i = 0; i < trt.vec.size(); ++i) {
         if (!trt.is_erased[i]) {
-            output << "f  " << trt[i][0]
-                    << " " << trt[i][1]
-                    << " " << trt[i][3]
+            output << "f  " << trt[i][0] + 1
+                    << " " << trt[i][1] + 1
+                    << " " << trt[i][2] + 1
                     << endl;
         }
     }
+    output << endl;
+    return output;
 }

@@ -16,7 +16,7 @@ struct vecex {
     }
     ty at(size_t i) const {
         if (i > vec.size() || is_erased[i])
-            throw std::out_of_range();
+            throw std::out_of_range("out of rangle");
         return vec[i];
     }
     size_t insert(const ty& inserted) {
