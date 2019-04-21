@@ -19,7 +19,7 @@ struct TriangleNet {
     double getVolumeError(size_t triangleID) const;
     double getMaxArea(size_t triangleID) const;
     double getAngleError(size_t triangleID) const;
-    void simplify(double v0, double s0, double a0);
+    void simplify(double s0);
     friend std::istream& operator>>(std::istream& input, TriangleNet& net);
     friend std::ostream& operator<<(std::ostream& output, TriangleNet& net);
 };

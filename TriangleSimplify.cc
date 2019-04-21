@@ -1,23 +1,23 @@
-#include <set>
+#include <queue>
 #include <string>
 #include <cmath>
 #include "TriangleSimplify.h"
 using namespace std;
 
 Point TriangleNet::getFoldPoint(size_t trid) const {
-    const Point& a = vertexTab.vec[triangleTab.vec[trid][0]];
-    const Point& b = vertexTab.vec[triangleTab.vec[trid][1]];
-    const Point& c = vertexTab.vec[triangleTab.vec[trid][2]];
+    const Point& a = vertexTab.at(triangleTab.at(trid)[0]);
+    const Point& b = vertexTab.at(triangleTab.at(trid)[1]);
+    const Point& c = vertexTab.at(triangleTab.at(trid)[2]);
     double nx = (a.x + b.x + c.x)/3;
     double ny = (a.y + b.y + c.y)/3;
     double nz = (a.z + b.z + c.z)/3;
     return  {nx, ny, nz};
 }
 
-double TriangleNet::getVolumeError(size_t trid) const {
-    const Point& a = vertexTab.vec[triangleTab.vec[trid][0]];
-    const Point& b = vertexTab.vec[triangleTab.vec[trid][1]];
-    const Point& c = vertexTab.vec[triangleTab.vec[trid][2]];
+double TriangleNet::getMaxArea(size_t trid) const {
+    const Point& a = vertexTab.at(triangleTab.at(trid)[0]);
+    const Point& b = vertexTab.at(triangleTab.at(trid)[1]);
+    const Point& c = vertexTab.at(triangleTab.at(trid)[2]);
     Point ab{a.x - b.x, a.y - b.y, a.z - b.z};
     Point ac{a.x - c.x, a.y - c.y, a.z - c.z};
     double ii = ab.y*ac.z - ab.z*ac.y;
@@ -26,40 +26,27 @@ double TriangleNet::getVolumeError(size_t trid) const {
     return sqrt(ii*ii + jj*jj + kk*kk)/2;
 }
 
-void TriangleNet::simplify(double v0, double s0, double a0) {
+void TriangleNet::simplify(double s0) {
     struct Data {
         size_t handle;
-        Point foldPoint;
-        double volumeError;
         double maxArea;
-        double angleError;
         bool operator<(const Data& upper) const {
-            return volumeError < upper.volumeError;
+            return maxArea > upper.maxArea;
         }
     };
-    set<Data> errorHeap;
+    priority_queue<Data> errorHeap;
     for (size_t i = 0; i < triangleTab.vec.size(); ++i) {
-        Data pushedData = { 
-            i, 
-            getFoldPoint(i), 
-            getVolumeError(i),
-            getMaxArea(i),
-            getAngleError(i)
-        };
-        errorHeap.insert(pushedData);
+        Data pushedData = {i, getMaxArea(i)};
+        errorHeap.push(pushedData);
     }
     while (!errorHeap.empty()) {
-        auto topIt = errorHeap.begin();
-        while (topIt->volumeError < v0) {
-            if (topIt->maxArea < s0 && topIt->angleError < a0)
-                break;
-            else ++topIt;
-        }
-        if (topIt->volumeError >= v0)
-            break;
+        auto topIt = errorHeap.top();
+        if (triangleTab.is_erased[topIt.handle])
+            continue;
+        if (topIt.maxArea > s0)    break;
         // TODO 折叠处理，删除和修改
         vector<array<size_t, 2>> vertexSet;
-        Triangle& tri = triangleTab.vec[topIt->handle];
+        Triangle& tri = triangleTab[topIt.handle];
         for (size_t i = 0; i < 3; ++i) {
             size_t vertexId = tri[i];
             for (auto j = vertexAdj[vertexId].begin();
@@ -81,15 +68,15 @@ void TriangleNet::simplify(double v0, double s0, double a0) {
             }
             vertexTab.erase(vertexId);
         }
-        triangleTab.erase(topIt->handle);
-        errorHeap.erase(topIt);
-        size_t nid = vertexTab.insert(topIt->foldPoint);
+        triangleTab.erase(topIt.handle);
+        size_t nid = vertexTab.insert(getFoldPoint(topIt.handle));
         for (auto& seg : vertexSet) {
             Triangle ntri{nid, seg[0], seg[1]};
             size_t ntd = triangleTab.insert(ntri);
             vertexAdj[seg[0]].push_front(ntd);
             vertexAdj[seg[1]].push_front(ntd);
             vertexAdj[nid].push_front(ntd);
+            errorHeap.push({ntd, getMaxArea(ntd)});
         }
     }
 }
@@ -120,5 +107,23 @@ istream& operator>>(istream& input, TriangleNet& net) {
 }
 
 ostream& operator<<(ostream& output, TriangleNet& net) {
-
+    auto& vtt = net.vertexTab;
+    for (size_t i = 0; i < vtt.vec.size(); ++i) {
+        if (!vtt.is_erased[i]) {
+            output << "v  " << vtt[i].x
+                    << " " << vtt[i].y
+                    << " " << vtt[i].z
+                    << endl;
+        }
+    }
+    output << endl;
+    auto& trt = net.triangleTab;
+    for (size_t i = 0; i < trt.vec.size(); ++i) {
+        if (!trt.is_erased[i]) {
+            output << "f  " << trt[i][0]
+                    << " " << trt[i][1]
+                    << " " << trt[i][3]
+                    << endl;
+        }
+    }
 }

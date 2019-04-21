@@ -2,6 +2,7 @@
 #define VECEX_H_
 #include <vector>
 #include <stack>
+#include <exception>
 
 template<typename ty>
 struct vecex {
@@ -10,6 +11,14 @@ struct vecex {
     std::stack<size_t> erased_id;
     vecex() {};
     vecex(size_t sz) : vec(sz), is_erased(sz, false) {}
+    ty& operator[](size_t i) {
+        return vec[i];
+    }
+    ty at(size_t i) const {
+        if (i > vec.size() || is_erased[i])
+            throw std::out_of_range();
+        return vec[i];
+    }
     size_t insert(const ty& inserted) {
         if (erased_id.empty()) {
             vec.push_back(inserted);
