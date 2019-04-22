@@ -41,17 +41,23 @@ void TriangleNet::simplify(double s0) {
     }
     while (!errorHeap.empty()) {
         auto topIt = errorHeap.top();
+        errorHeap.pop();
         if (triangleTab.is_erased[topIt.handle])
             continue;
         if (topIt.maxArea > s0)    break;
         // TODO 折叠处理，删除和修改
+        size_t nid = vertexTab.insert(getFoldPoint(topIt.handle));
         vector<array<size_t, 2>> vertexSet;
         Triangle& tri = triangleTab[topIt.handle];
         for (size_t i = 0; i < 3; ++i) {
             size_t vertexId = tri[i];
             for (auto j = vertexAdj[vertexId].begin();
                 j != vertexAdj[vertexId].end(); ++j) {
-                Triangle& adjTri = triangleTab.vec[*j];
+                if (triangleTab.is_erased[*j]) {
+                    //cout << "mmp\n";
+                    continue;
+                }
+                Triangle& adjTri = triangleTab[*j];
                 array<size_t, 2> seg{vertexTab.vec.size(), vertexTab.vec.size()};
                 size_t idx = 0;
                 for (size_t k = 0; k < 3; ++k) {
@@ -67,9 +73,9 @@ void TriangleNet::simplify(double s0) {
                 triangleTab.erase(*j);
             }
             vertexTab.erase(vertexId);
+            vertexAdj[vertexId].clear();
         }
         triangleTab.erase(topIt.handle);
-        size_t nid = vertexTab.insert(getFoldPoint(topIt.handle));
         for (auto& seg : vertexSet) {
             Triangle ntri{nid, seg[0], seg[1]};
             size_t ntd = triangleTab.insert(ntri);
