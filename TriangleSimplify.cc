@@ -115,8 +115,11 @@ istream& operator>>(istream& input, TriangleNet& net) {
 
 ostream& operator<<(ostream& output, TriangleNet& net) {
     auto& vtt = net.vertexTab;
+    vector<size_t> trans(vtt.vec.size());
+    size_t nid = 0;
     for (size_t i = 0; i < vtt.vec.size(); ++i) {
         if (!vtt.is_erased[i]) {
+            trans[i] = ++nid;
             output << "v  " << vtt[i].x
                     << " " << vtt[i].y
                     << " " << vtt[i].z
@@ -127,9 +130,9 @@ ostream& operator<<(ostream& output, TriangleNet& net) {
     auto& trt = net.triangleTab;
     for (size_t i = 0; i < trt.vec.size(); ++i) {
         if (!trt.is_erased[i]) {
-            output << "f  " << trt[i][0] + 1
-                    << " " << trt[i][1] + 1
-                    << " " << trt[i][2] + 1
+            output << "f  " << trans[trt[i][0]]
+                    << " " << trans[trt[i][1]]
+                    << " " << trans[trt[i][2]]
                     << endl;
         }
     }
