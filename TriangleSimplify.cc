@@ -50,30 +50,25 @@ void TriangleNet::simplify(double s0) {
         vector<array<size_t, 2>> vertexSet;
         Triangle& tri = triangleTab[topIt.handle];
         for (size_t i = 0; i < 3; ++i) {
-            size_t vertexId = tri[i];
-            for (auto j = vertexAdj[vertexId].begin();
-                j != vertexAdj[vertexId].end(); ++j) {
-                if (triangleTab.is_erased[*j]) {
-                    //cout << "mmp\n";
-                    continue;
-                }
-                Triangle& adjTri = triangleTab[*j];
+            for (const auto triId : vertexAdj[tri[i]]) {
+                Triangle adjTri = triangleTab.at(triId);
                 array<size_t, 2> seg{vertexTab.vec.size(), vertexTab.vec.size()};
                 size_t idx = 0;
                 for (size_t k = 0; k < 3; ++k) {
                     size_t adjVertex = adjTri[k];
-                    if (adjVertex != vertexId) {
-                        if (adjVertex != tri[(i + 1)%3] && adjVertex != tri[(i + 2)%3])
-                            seg[idx++] = adjVertex;
-                        vertexAdj[adjVertex].remove(*j);
-                    }
+                    if (adjVertex != tri[(i + 1)%3] && 
+                        adjVertex != tri[(i + 2)%3] &&
+                        adjVertex != tri[i])
+                        seg[idx++] = adjVertex;
+                    vertexAdj[adjVertex].remove(triId);
                 }
                 if (seg[0] != vertexTab.vec.size() && seg[1] != vertexTab.vec.size())
                     vertexSet.push_back(seg);
-                triangleTab.erase(*j);
+                if (topIt.handle != triId)
+                    triangleTab.erase(triId);
             }
-            vertexTab.erase(vertexId);
-            vertexAdj[vertexId].clear();
+            vertexTab.erase(tri[i]);
+            vertexAdj[tri[i]].clear();
         }
         triangleTab.erase(topIt.handle);
         for (auto& seg : vertexSet) {
