@@ -46,23 +46,27 @@ void TriangleNet::simplify(double s0) {
             continue;
         if (topIt.maxArea > s0)    break;
         // TODO 折叠处理，删除和修改
+        size_t nsz = vertexTab.vec.size();
         size_t nid = vertexTab.insert(getFoldPoint(topIt.handle));
+        if (nsz == nid)
+            vertexAdj.push_back(forward_list<size_t>());
         vector<array<size_t, 2>> vertexSet;
         Triangle& tri = triangleTab[topIt.handle];
         for (size_t i = 0; i < 3; ++i) {
-            for (const auto triId : vertexAdj[tri[i]]) {
+            for (const auto triId : vertexAdj.at(tri[i])) {
                 Triangle adjTri = triangleTab.at(triId);
-                array<size_t, 2> seg{vertexTab.vec.size(), vertexTab.vec.size()};
+                array<size_t, 2> seg;
                 size_t idx = 0;
                 for (size_t k = 0; k < 3; ++k) {
                     size_t adjVertex = adjTri[k];
-                    if (adjVertex != tri[(i + 1)%3] && 
-                        adjVertex != tri[(i + 2)%3] &&
-                        adjVertex != tri[i])
-                        seg[idx++] = adjVertex;
-                    vertexAdj[adjVertex].remove(triId);
+                    if (adjVertex != tri[i]) {
+                        if (adjVertex != tri[(i + 1)%3] && 
+                            adjVertex != tri[(i + 2)%3])
+                            seg[idx++] = adjVertex;
+                        vertexAdj[adjVertex].remove(triId);
+                    }
                 }
-                if (seg[0] != vertexTab.vec.size() && seg[1] != vertexTab.vec.size())
+                if (idx == 2)
                     vertexSet.push_back(seg);
                 if (topIt.handle != triId)
                     triangleTab.erase(triId);
