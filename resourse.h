@@ -3,7 +3,7 @@
 #include <fstream>
 #include "TriangleSimplify.h"
 
-#define VOLUMEERROR 0.29
+#define VOLUMEERROR 0.001
 #define OUTPUTFILE "output.obj"
 
 #endif

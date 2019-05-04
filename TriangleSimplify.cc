@@ -125,29 +125,27 @@ void TriangleNet::simplify(double v0) {
         // TODO 折叠处理，删除和修改
         vector<array<size_t, 2>> vertexSet;
         Triangle& tri = triangleTab[topIt.handle];
-        for (size_t i = 0; i < 3; ++i) {
-            for (const auto triId : vertexAdj.at(tri[i])) {
-                if (triId == topIt.handle)  continue;
-                Triangle adjTri = triangleTab.at(triId);
-                array<size_t, 2> seg;
-                size_t idx = 0;
-                for (size_t k = 0; k < 3; ++k) {
-                    size_t adjVertex = adjTri[k];
-                    if (adjVertex != tri[i]) {
-                        if (adjVertex != tri[(i + 1)%3] && 
-                            adjVertex != tri[(i + 2)%3])
-                            seg[idx++] = adjVertex;
-                        vertexAdj[adjVertex].remove(triId);
-                    }
-                }
-                if (idx == 2)
-                    vertexSet.push_back(seg);
-                triangleTab.erase(triId);
+        unordered_set<size_t> triSet;
+        for (size_t vi : tri) {
+            for (size_t tj : vertexAdj[vi]) {
+                triSet.insert(tj);
             }
-            vertexAdj[tri[i]].clear();
-            vertexTab.erase(tri[i]);
         }
-        triangleTab.erase(topIt.handle);
+        for (size_t t : triSet) {
+            array<size_t, 2> seg;
+            size_t idx = 0;
+            for (size_t v : triangleTab[t]) {
+                if (v != tri[0] && v != tri[1] && v != tri[2])
+                    seg[idx++] = v;
+                vertexAdj[v].remove(t);
+            }
+            if (idx == 2)   vertexSet.push_back(seg);
+            triangleTab.erase(t);
+        }
+        for (size_t v : tri) {
+            vertexTab.erase(v);
+            vertexAdj[v].clear();
+        }
         size_t nid = vertexTab.insert(topIt.foldPoint);
         for (auto& seg : vertexSet) {
             Triangle ntri{nid, seg[0], seg[1]};
@@ -155,9 +153,11 @@ void TriangleNet::simplify(double v0) {
             vertexAdj[seg[0]].push_front(ntd);
             vertexAdj[seg[1]].push_front(ntd);
             vertexAdj[nid].push_front(ntd);
-            //Point nfp = getFoldPoint(ntd);
-            //Data npushed{ntd, nfp, getVolumeError(ntd, nfp)};
-            //errorHeap.push(npushed);
+        }
+        for (size_t pj : vertexAdj[nid]) {
+            Point nfp = getFoldPoint(pj);
+            Data psd{pj, nfp, getVolumeError(pj, nfp)};
+            errorHeap.push(psd);
         }
     }
 }
