@@ -1,5 +1,3 @@
-#include <fstream>
-#include "TriangleSimplify.h"
 #include "resourse.h"
 using namespace std;
 
@@ -10,7 +8,7 @@ int main(int args, const char* argv[]) {
     TriangleNet net;
     fin >> net;
     fin.close();
-    net.simplify(MAXAREA);
+    net.simplify(VOLUMEERROR);
     ofstream fout(OUTPUTFILE);
     fout << net;
     fout.close();
